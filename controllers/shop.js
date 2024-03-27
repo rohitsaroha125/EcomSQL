@@ -1,5 +1,6 @@
 const Product = require("../models/product");
 const Cart = require("../models/cart");
+const User = require("../models/user");
 
 exports.getProducts = async (req, res, next) => {
   try {
@@ -41,25 +42,19 @@ exports.getIndex = async (req, res, next) => {
   }
 };
 
-exports.getCart = (req, res, next) => {
-  Cart.getCart((cart) => {
-    Product.fetchAll((products) => {
-      const cartProducts = [];
-      for (product of products) {
-        const cartProductData = cart.products.find(
-          (prod) => prod.id === product.id
-        );
-        if (cartProductData) {
-          cartProducts.push({ productData: product, qty: cartProductData.qty });
-        }
-      }
-      res.render("shop/cart", {
-        path: "/cart",
-        pageTitle: "Your Cart",
-        products: cartProducts,
-      });
+exports.getCart = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(1);
+    const cart = await user.getCart();
+    const cartItems = await cart.getProducts();
+    res.render("shop/cart", {
+      path: "/cart",
+      pageTitle: "Your Cart",
+      products: cartItems,
     });
-  });
+  } catch (err) {
+    console.log("Error is ", err);
+  }
 };
 
 exports.postCart = (req, res, next) => {
