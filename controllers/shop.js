@@ -57,20 +57,47 @@ exports.getCart = async (req, res, next) => {
   }
 };
 
-exports.postCart = (req, res, next) => {
-  const prodId = req.body.productId;
-  Product.findById(prodId, (product) => {
-    Cart.addProduct(prodId, product.price);
-  });
-  res.redirect("/cart");
+exports.postCart = async (req, res, next) => {
+  try {
+    const prodId = req.body.productId;
+    const user = await User.findByPk(1);
+    const cart = await user.getCart();
+
+    const findProducts = await cart.getProducts({ where: { id: prodId } });
+
+    if (findProducts.length > 0) {
+      const newQty = findProducts[0].cartItem.qty + 1;
+      const addProduct = cart.addProduct(findProducts[0], {
+        through: { qty: newQty },
+      });
+    } else {
+      const product = await Product.findByPk(prodId);
+      const addProduct = await cart.addProduct(product, {
+        through: { qty: 1 },
+      });
+      console.log("added product is ", addProduct);
+    }
+
+    res.redirect("/cart");
+  } catch (err) {
+    console.log("Error is ", err);
+  }
 };
 
-exports.postCartDeleteProduct = (req, res, next) => {
-  const prodId = req.body.productId;
-  Product.findById(prodId, (product) => {
-    Cart.deleteProduct(prodId, product.price);
-    res.redirect("/cart");
-  });
+exports.postCartDeleteProduct = async (req, res, next) => {
+  try {
+    const prodId = req.body.productId;
+    const user = await User.findByPk(1);
+    const cart = await user.getCart();
+    const products = await cart.getProducts({ where: { id: prodId } });
+    if (products.length > 0) {
+      const product = products[0];
+      product.cartItem.destroy();
+      res.redirect("/cart");
+    }
+  } catch (err) {
+    console.log("Error is ", err);
+  }
 };
 
 exports.getOrders = (req, res, next) => {
