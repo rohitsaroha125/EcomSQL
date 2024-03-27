@@ -48,21 +48,35 @@ exports.getEditProduct = async (req, res, next) => {
   }
 };
 
-exports.postEditProduct = (req, res, next) => {
-  const prodId = req.body.productId;
-  const updatedTitle = req.body.title;
-  const updatedPrice = req.body.price;
-  const updatedImageUrl = req.body.imageUrl;
-  const updatedDesc = req.body.description;
-  const updatedProduct = new Product(
-    prodId,
-    updatedTitle,
-    updatedImageUrl,
-    updatedDesc,
-    updatedPrice
-  );
-  updatedProduct.save();
-  res.redirect("/admin/products");
+exports.postEditProduct = async (req, res, next) => {
+  try {
+    const prodId = req.body.productId;
+    const updatedTitle = req.body.title;
+    const updatedPrice = req.body.price;
+    const updatedImageUrl = req.body.imageUrl;
+    const updatedDesc = req.body.description;
+
+    const updateProduct = await Product.update(
+      {
+        title: updatedTitle,
+        description: updatedDesc,
+        imageUrl: updatedImageUrl,
+        price: updatedPrice,
+      },
+      {
+        where: {
+          id: prodId,
+        },
+      }
+    );
+
+    if (updateProduct) {
+      console.log("Updated Product is ", updateProduct);
+      res.redirect("/admin/products");
+    }
+  } catch (err) {
+    console.log("Error is ", err);
+  }
 };
 
 exports.getProducts = async (req, res, next) => {
