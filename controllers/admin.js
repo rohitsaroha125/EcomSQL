@@ -92,8 +92,19 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
-exports.postDeleteProduct = (req, res, next) => {
-  const prodId = req.body.productId;
-  Product.deleteById(prodId);
-  res.redirect("/admin/products");
+exports.postDeleteProduct = async (req, res, next) => {
+  try {
+    const prodId = req.body.productId;
+    const deletedProduct = await Product.destroy({
+      where: {
+        id: prodId,
+      },
+    });
+    if (deletedProduct) {
+      console.log("Deleted Product is ", deletedProduct);
+      res.redirect("/admin/products");
+    }
+  } catch (err) {
+    console.log("Error is ", err);
+  }
 };
